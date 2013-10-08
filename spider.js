@@ -71,7 +71,9 @@ spider = (function() {
             registry[module].constructor();
         }else{
             executeOnReady[module] = true;
-            load(module);
+            if(!setting.concat) {
+                load(module);
+            };
         };
     },
 
@@ -90,16 +92,6 @@ spider = (function() {
         return dependencies;
     },
     
-    // import a module into the app
-    // return the module object
-    // can only be called inside the constructor passed to the define() method
-    import = function(module) {
-        if(typeof registry[module].obj === 'undefined') {
-            registry[module].obj = registry[module].constructor();
-        };
-        return registry[module].obj;
-    },
-
     // load a script from the server in a new script tag
     // delete the script tag once the js has been parsed
     load = function(module) {
@@ -144,10 +136,19 @@ spider = (function() {
     };
     
     return {
-        debug:debug;
+        debug:debug,
         define:define,
         execute:execute,
-        import:import
+
+        // import a module into the app
+        // return the module object
+        // can only be called inside the constructor passed to the define() method
+        import:function(module) {
+            if(typeof registry[module].obj === 'undefined') {
+                registry[module].obj = registry[module].constructor();
+            };
+            return registry[module].obj;
+        }
     };
 
 }());
