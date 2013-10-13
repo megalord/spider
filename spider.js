@@ -71,7 +71,7 @@ spider = (function() {
             registry[module].constructor();
         }else{
             executeOnReady[module] = true;
-            if(!setting.concat) {
+            if(!settings.concat) {
                 load(module);
             };
         };
@@ -83,7 +83,7 @@ spider = (function() {
     findDependencies = function(constructor) {
         var dependencies = [],
             constructorString = constructor.toString(),
-            regex = /module\.import\('([\w\/]*)'\)/g,
+            regex = /spider\.import\('([\w\/]*)'\)/g,
             match = regex.exec(constructorString);
         while(match) {
             dependencies.push(match[1]);
