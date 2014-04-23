@@ -26,7 +26,7 @@ Tells spider which module is the root module.  If the module dependencies are vi
 spider.execute('app');  // loads app.js, which should have a call to spider.define()
 ```
 
-####import(module)
+####fetch(module)
 
 Imports a module, returning whatever is returned by that module's constructor function. Note that calls to import outside of a define constructor will fail unless the module being imported is already loaded.
 
@@ -37,6 +37,6 @@ spider.define('model', function() {
     };
 });
 
-var model = spider.import('model');
+var model = spider.fetch('model');
 // model.a returns 1
 ```
