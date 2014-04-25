@@ -2,41 +2,38 @@
 
 A library for defining and injecting client-side modules from different files.
 
-####config(newSettings)
+##API
 
-Writes each key/value pair of the passed object literal to the private settings object.
-
-Available settings:
-* basePath (string) = '/' -> The base path (root folder) of the javascript files on the server.
-* concat (bool) = false -> A flag indicating if the javascript files for the modules are concatenated. When false, no attempt is made to load dependencies from the server.
-
-####define(module, constructor)
+####define(constructor)
 
 Define a module with a constructor function, which can return any data type. The constructor function is only executed once, no matter how many times the module is imported across other modules. The functions result is cached in a registry, and that variable is returned for subsequent imports.
 
-All modules should be named by their file path relative to the basePath.  The .js file extension should not be in the name, nor should a leading backslash.  For example, /app/main.js should be named 'app/main'.
+The require function is passed as the only argument to the constructor function. Spider will automatically attempt to load any modules imported by the require function.
 
-Spider will automatically attempt to load any modules imported by the constructor.
+####require()
 
-####execute(module)
+Imports a module, returning whatever is returned by that module's constructor function.
 
-Tells spider which module is the root module.  If the module dependencies are visualized as a web, this module is the center.  Once the entire module web is loaded, the constructor function for the specified module is executed.  The execute method returns the result of the constructor, just like import.
+##Usage
 
-```javascript
-spider.execute('app');  // loads app.js, which should have a call to spider.define()
+Download the source and add it to your html page. Point spider to your main executable (top-level module) by adding the attribute data-execute="your_module" to the script tag. Once the entire module web is loaded, the constructor function for the specified module is executed.
+
+For example...
+```html
+<script data-execute="app" src="libs/spider.min.js"></script>
 ```
 
-####fetch(module)
-
-Imports a module, returning whatever is returned by that module's constructor function. Note that calls to import outside of a define constructor will fail unless the module being imported is already loaded.
-
 ```javascript
-spider.define('model', function() {
-    return {
-        a:1
-    };
+//app.js
+spider.define(function(require) {
+    var module = require('./module');
+    console.log(module);
 });
 
-var model = spider.fetch('model');
-// model.a returns 1
+//module.js
+spider.define(function() {
+	return 1;
+});
 ```
+
+Although the example returns an integer for simplicity, the constructor function for a module can return any type of value.
