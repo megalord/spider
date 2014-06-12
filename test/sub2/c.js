@@ -1,4 +1,5 @@
 spider.define(function(require) {
-    var d = require('./d');
-    return 'c' + d;
+    var d = require('./d'),
+        e = require('../e');
+    return 'c' + d + e;
 });
