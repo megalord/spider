@@ -2,6 +2,8 @@ window.spider = (function() {
     
     var executeOnReady = document.currentScript.getAttribute('data-execute'),
 
+        basePath = location.pathname.slice(0, location.pathname.lastIndexOf('/') + 1) + executeOnReady.slice(0, executeOnReady.lastIndexOf('/') + 1),
+
         // Storage for all module information.
         registry = {};
     
@@ -10,12 +12,18 @@ window.spider = (function() {
         var module = registry[path],
         
         require = function(relativePath) {
-            return registry[resolvePath(module.parentDirectory + relativePath)].exports;
+            return registry[resolvePath(module.parentDirectory, relativePath)].exports;
         };
         
         module.exports = module.constructor(require);
     }
     
+    function config(options) {
+        if ('basePath' in options) {
+            basePath = options.basePath;
+        }
+    }
+
     function define(constructor) {
         // Every module is added to the registry before it is defined (by a module dependent on it).
         
@@ -61,7 +69,7 @@ window.spider = (function() {
             regex = /require\('([\.\w\/]*)'\)/g;
         
         while (match = regex.exec(constructorString)) {
-            dependencies.push(resolvePath(parentDirectory + match[1]));
+            dependencies.push(resolvePath(parentDirectory, match[1]));
         }
         
         return dependencies;
@@ -105,8 +113,12 @@ window.spider = (function() {
     }
  
     // Transform a partial or relative path into a full path.
-    function resolvePath(path) {
-        var dirs    = path.split('/'),
+    function resolvePath(parentDirectory, relativePath) {
+        if (relativePath.slice(0, 2) !== './' && relativePath.slice(0, 3) !== '../') {
+            return basePath + relativePath;
+        }
+
+        var dirs    = (parentDirectory + relativePath).split('/'),
             i       = 0;
 
         while (i < dirs.length) {
@@ -137,6 +149,7 @@ window.spider = (function() {
     
     // Expose the define function to the global spider namespace.
     return {
+        config: config,
         define: define
     }
     
