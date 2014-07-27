@@ -1,12 +1,18 @@
 window.spider = (function() {
     
-    var executeOnReady = document.currentScript.getAttribute('data-execute'),
+    var aliases = {},
+    
+        executeOnReady = document.currentScript.getAttribute('data-execute'),
 
         basePath = location.pathname.slice(0, location.pathname.lastIndexOf('/') + 1) + executeOnReady.slice(0, executeOnReady.lastIndexOf('/') + 1),
 
         // Storage for all module information.
         registry = {};
     
+    function alias(from, to) {
+        aliases[to] = resolvePath(basePath, from);
+    }
+
     // Build and cache a module by calling its constructor and passing the require function.
     function build(path) {
         var module = registry[path],
@@ -16,6 +22,7 @@ window.spider = (function() {
         };
         
         module.exports = module.constructor(require);
+        module.isBuilt = true;
     }
     
     function config(options) {
@@ -35,11 +42,12 @@ window.spider = (function() {
         if (!(path in registry)) {
             registry[path] = {
                 importedBy: [],
-                ready: false
+                isReady: false
             };
         }
 
         // Complete the module's registry data.
+        registry[path].isBuilt = false;
         registry[path].constructor = constructor;
         registry[path].dependencies = dependencies;
         registry[path].parentDirectory = parentDirectory;
@@ -49,7 +57,7 @@ window.spider = (function() {
             if (!(dependencies[i] in registry)) {
                 registry[dependencies[i]] = {
                     importedBy: [],
-                    ready: false
+                    isReady: false
                 };
                 
                 load(dependencies[i]);
@@ -80,7 +88,7 @@ window.spider = (function() {
         var dependencies = registry[path].dependencies;
         
         for(var i = 0; i < dependencies.length; i++) {
-            if(!registry[dependencies[i]].ready) {
+            if(!registry[dependencies[i]].isReady) {
                 return false;
             }
         }
@@ -102,9 +110,9 @@ window.spider = (function() {
     function propagateReadiness(path) {
         var module = registry[path];
         
-        module.ready = isReady(path);
+        module.isReady = isReady(path);
         
-        if (module.ready) {
+        if (!module.isBuilt && module.isReady) {
             build(path);
             for (var i = 0; i < module.importedBy.length; i++) {
                 propagateReadiness(module.importedBy[i]);
@@ -114,6 +122,10 @@ window.spider = (function() {
  
     // Transform a partial or relative path into a full path.
     function resolvePath(parentDirectory, relativePath) {
+        if (relativePath in aliases) {
+            return aliases[relativePath];
+        }
+
         if (relativePath.slice(0, 2) !== './' && relativePath.slice(0, 3) !== '../') {
             return basePath + relativePath;
         }
@@ -147,8 +159,10 @@ window.spider = (function() {
     // Load the executable.
     load(executeOnReady);
     
+    window.r = registry;
     // Expose the define function to the global spider namespace.
     return {
+        alias:  alias,
         config: config,
         define: define
     }
